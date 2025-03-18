@@ -15,7 +15,7 @@ class UnlimitedAIClient {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"
   };
 
-  wpnonce = "ed16d84167";
+  wpnonce = "79a5c74b8a";
   postId = "18";
   chatbotIdentity = "shortcode";
   wpaicgChatClientId = "a5UlxWnSOp";
@@ -96,10 +96,15 @@ class UnlimitedAIClient {
   }
 }
 
-// Cria uma instância global do client. Para uma aplicação real, pode ser interessante gerenciar sessões separadas.
+// Instância única do client (para exemplo)
 const client = new UnlimitedAIClient();
 
 const router = new Router();
+
+// Rota base para confirmar que a API está rodando
+router.get("/", (context) => {
+  context.response.body = { message: "API funcionando no Deno Deploy" };
+});
 
 // Endpoint para enviar mensagem e obter resposta
 router.post("/send", async (context) => {
@@ -134,4 +139,5 @@ const app = new Application();
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-await app.listen();
+// Em Deno Deploy, exportamos o handler para que o ambiente o utilize automaticamente.
+export default app.fetch;
