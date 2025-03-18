@@ -1,4 +1,4 @@
-import { Application, Router } from "https://deno.land/x/oak/mod.ts";
+import { Hono } from "https://deno.land/x/hono@v3.4.1/mod.ts";
 
 class UnlimitedAIClient {
   baseUrl = "https://unlimitedai.org";
@@ -15,7 +15,7 @@ class UnlimitedAIClient {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0"
   };
 
-  wpnonce = "79a5c74b8a";
+  wpnonce = "ed16d84167";
   postId = "18";
   chatbotIdentity = "shortcode";
   wpaicgChatClientId = "a5UlxWnSOp";
@@ -96,48 +96,39 @@ class UnlimitedAIClient {
   }
 }
 
-// Instância única do client (para exemplo)
+// Cria uma instância global do client
 const client = new UnlimitedAIClient();
 
-const router = new Router();
+const app = new Hono();
 
-// Rota base para confirmar que a API está rodando
-router.get("/", (context) => {
-  context.response.body = { message: "API funcionando no Deno Deploy" };
+// Rota raiz para conferir se a API está ativa
+app.get("/", (c) => {
+  return c.json({ message: "API funcionando no Deno Deploy com Hono" });
 });
 
 // Endpoint para enviar mensagem e obter resposta
-router.post("/send", async (context) => {
+app.post("/send", async (c) => {
   try {
-    const { value } = await context.request.body({ type: "json" });
-    const { message } = await value;
+    const body = await c.req.json();
+    const message = body.message;
     if (!message) {
-      context.response.status = 400;
-      context.response.body = { error: "Mensagem não informada" };
-      return;
+      return c.json({ error: "Mensagem não informada" }, 400);
     }
     const answer = await client.sendMessage(message);
-    context.response.status = 200;
-    context.response.body = { answer, session_id: client.sessionId };
+    return c.json({ answer, session_id: client.sessionId });
   } catch (error) {
     console.error("Erro no endpoint /send:", error);
-    context.response.status = 500;
-    context.response.body = { error: "Erro interno" };
+    return c.json({ error: "Erro interno" }, 500);
   }
 });
 
 // Endpoint para visualizar o histórico da sessão
-router.get("/history", (context) => {
-  context.response.status = 200;
-  context.response.body = {
+app.get("/history", (c) => {
+  return c.json({
     session_id: client.sessionId,
     chat_history: client.chatHistory,
-  };
+  });
 });
 
-const app = new Application();
-app.use(router.routes());
-app.use(router.allowedMethods());
-
-// Em Deno Deploy, exportamos o handler para que o ambiente o utilize automaticamente.
+// Exporta o handler para o Deno Deploy usar
 export default app.fetch;
